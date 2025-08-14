@@ -43,9 +43,18 @@
                         <input type="password" id="password" class="form-input w-full" placeholder="••••••••">
                     </div>
                     <p id="login-error" class="text-red-500 text-sm hidden" data-lang-key="login-error">用户名或密码无效。</p>
+
+                    <div class="terms-checkbox-container">
+                        <input type="checkbox" id="agree-checkbox" class="form-checkbox">
+                        <label for="agree-checkbox" class="text-sm text-gray-600">
+                            我已阅读并同意
+                            <a href="terms-of-service.html" target="_blank" class="text-teal-600 hover:underline">服务条款</a>
+                            和
+                            <a href="privacy-policy.html" target="_blank" class="text-teal-600 hover:underline">隐私政策</a>。
+                        </label>
+                    </div>
                     <div>
-                        <button id="login-button" class="btn-primary w-full px-5 py-4 text-lg">
-                            <span data-lang-key="login-button">登录</span>
+                        <button id="login-button" class="btn-primary w-full px-5 py-4 text-lg" disabled> <span data-lang-key="login-button">登录</span>
                         </button>
                     </div>
                 </div>

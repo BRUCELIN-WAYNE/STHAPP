@@ -107,10 +107,7 @@ body {
     transform: scale(1.03);
     box-shadow: 0 6px 20px rgba(0, 128, 128, 0.25);
 }
-.btn-primary:disabled {
-    background-color: #a0aec0;
-    cursor: not-allowed;
-}
+/* .btn-primary:disabled is now at the end of the file for better management */
 .btn-secondary {
     background-color: #e2e8f0;
     color: #4a5568;
@@ -341,4 +338,28 @@ fieldset:disabled {
 }
 .copyright-notice {
     line-height: 1.5;
+}
+
+/* ==== 新增的“同意条款”复选框样式 ==== */
+.terms-checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* 12px */
+    margin-bottom: 1.5rem; /* 24px */
+}
+
+.form-checkbox {
+    width: 1rem; /* 16px */
+    height: 1rem; /* 16px */
+    border-radius: 0.25rem; /* 4px */
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.btn-primary:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }

@@ -641,7 +641,32 @@ document.addEventListener('DOMContentLoaded', () => {
     switchTab('lactate');
     document.getElementById('content-css').style.display = 'none';
 
-    document.getElementById('login-button').addEventListener('click', handleLogin);
+    // ==== 逻辑修改/新增部分 ====
+
+    // 1. 获取新添加的复选框和登录按钮
+    const agreeCheckbox = document.getElementById('agree-checkbox');
+    const loginButton = document.getElementById('login-button');
+
+    // 2. 监听复选框的点击事件
+    agreeCheckbox.addEventListener('change', () => {
+        // 如果复选框被勾选，则启用按钮；否则，禁用按钮
+        loginButton.disabled = !agreeCheckbox.checked;
+    });
+
+    // 3. 修改 handleLogin 函数，增加一层保险检查
+    const originalHandleLogin = handleLogin;
+    window.handleLogin = async (event) => {
+        if (!agreeCheckbox.checked) {
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.textContent = '请先阅读并同意服务条款和隐私政策。'; // 新的提示
+            errorDiv.classList.remove('hidden');
+            return; // 中断登录
+        }
+        await originalHandleLogin(event); // 调用原始登录逻辑
+    };
+    
+    // 4. 绑定所有现有的事件监听器
+    document.getElementById('login-button').addEventListener('click', (event) => window.handleLogin(event));
     document.getElementById('login-modal-container').addEventListener('click', (event) => { if (event.target === event.currentTarget) { closeLoginModal(); } });
     document.getElementById('calculate-pace-btn').addEventListener('click', (e) => { createRipple(e); calculatePaceSuggestions(); });
     document.getElementById('calculate-css-btn').addEventListener('click', calculateCSS);
