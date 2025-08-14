@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>Swimming Test-hub (专业版)</title>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -47,14 +47,16 @@
                     <div class="terms-checkbox-container">
                         <input type="checkbox" id="agree-checkbox" class="form-checkbox">
                         <label for="agree-checkbox" class="text-sm text-gray-600">
-                            我已阅读并同意
-                            <a href="terms-of-service.html" target="_blank" class="text-teal-600 hover:underline">服务条款</a>
-                            和
-                            <a href="privacy-policy.html" target="_blank" class="text-teal-600 hover:underline">隐私政策</a>。
+                            <span data-lang-key="agree-terms-prompt">我已阅读并同意</span>
+                            <a href="terms-of-service.html" target="_blank" class="text-teal-600 hover:underline"><span data-lang-key="terms-of-service-link">服务条款</span></a>
+                            <span data-lang-key="and">和</span>
+                            <a href="privacy-policy.html" target="_blank" class="text-teal-600 hover:underline"><span data-lang-key="privacy-policy-link">隐私政策</span></a>。
                         </label>
                     </div>
+
                     <div>
-                        <button id="login-button" class="btn-primary w-full px-5 py-4 text-lg" disabled> <span data-lang-key="login-button">登录</span>
+                        <button id="login-button" class="btn-primary w-full px-5 py-4 text-lg" disabled>
+                            <span data-lang-key="login-button">登录</span>
                         </button>
                     </div>
                 </div>
