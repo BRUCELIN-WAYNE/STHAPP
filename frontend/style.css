@@ -315,3 +315,30 @@ fieldset:disabled {
 [data-cloak] {
     display: none !important;
 }
+.site-footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    margin-top: 4rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--background-color);
+    position: relative;
+    z-index: 10;
+}
+.footer-links {
+    margin-bottom: 1rem;
+}
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    margin: 0 0.5rem;
+}
+.footer-links a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+.copyright-notice {
+    line-height: 1.5;
+}

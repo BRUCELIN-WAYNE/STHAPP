@@ -117,7 +117,7 @@ async function handleLogin(event) {
     const username = usernameInput.value;
     const password = passwordInput.value;
     try {
-        const response = await fetch('https://swimming-test-hub-api.onrender.com/api/login', {
+        const response = await fetch('http://localhost:3000/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: username, password: password })
@@ -288,7 +288,7 @@ async function calculateCSS(event) {
         const t200_min = document.getElementById('t200m_min').value;
         const t200_sec = document.getElementById('t200m_sec').value;
 
-        const response = await fetch('https://swimming-test-hub-api.onrender.com/api/analyze/css', {
+        const response = await fetch('http://localhost:3000/api/analyze/css', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ t400_min, t400_sec, t200_min, t200_sec })
@@ -360,7 +360,7 @@ async function analyzeLactate(event) {
         const mlssMethod = mlssMethodElement ? mlssMethodElement.value : 'mod_dmax';
 
         const requestBody = { data: collectedData, peakLactate, recoveryLactate, recoveryDuration, mlssMethod };
-        const response = await fetch('https://swimming-test-hub-api.onrender.com/api/analyze/lactate', {
+        const response = await fetch('http://localhost:3000/api/analyze/lactate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
@@ -405,7 +405,7 @@ async function analyzeGroupData(event) {
         globalGroupData = parsedGroupData;
         if (Object.keys(parsedGroupData).length === 0) { throw new Error(translations[currentLanguage]['alert-parse-error']); }
         
-        const response = await fetch('https://swimming-test-hub-api.onrender.com/api/analyze/group', {
+        const response = await fetch('http://localhost:3000/api/analyze/group', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ groupData: parsedGroupData })
@@ -611,7 +611,7 @@ async function updateSingleAnalysisWrapper(reportId, athleteName) {
         const athleteLevel = document.getElementById('group-athlete-level').value;
         const eventSpecialty = document.getElementById('group-event-specialty').value;
         const requestBody = { data: athleteData, mlssMethod: newMlssMethod };
-        const response = await fetch('https://swimming-test-hub-api.onrender.com/api/analyze/lactate', {
+        const response = await fetch('http://localhost:3000/api/analyze/lactate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
