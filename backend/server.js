@@ -164,7 +164,7 @@ app.post('/api/articles', (req, res) => {
 });
 
 // ==========================================================
-// --- 新增：删除一篇文章的API接口 ---
+// --- 删除一篇文章的API接口 ---
 // ==========================================================
 app.delete('/api/articles/:id', (req, res) => {
     // 1. 从 URL 中获取 id 参数, 并将其转换为数字
@@ -183,6 +183,39 @@ app.delete('/api/articles/:id', (req, res) => {
     } else {
         // 如果没找到，返回 404 Not Found 错误
         console.log(`尝试删除失败，未找到文章 ID: ${articleId}`);
+        res.status(404).json({ message: 'Article not found' });
+    }
+});
+
+// ==========================================================
+// --- 新增：更新一篇文章的API接口 ---
+// ==========================================================
+app.put('/api/articles/:id', (req, res) => {
+    // 1. 从 URL 中获取 id 参数, 并将其转换为数字
+    const articleId = parseInt(req.params.id, 10);
+    // 2. 从请求体中获取更新后的数据
+    const { title, author } = req.body;
+
+    // 3. 简单的验证
+    if (!title || !author) {
+        return res.status(400).json({ message: 'Title and author are required.' });
+    }
+
+    // 4. 在数组中查找该文章的索引 (index)
+    const articleIndex = articles.findIndex(a => a.id === articleId);
+
+    // 5. 如果找到了文章
+    if (articleIndex !== -1) {
+        // 更新文章对象
+        articles[articleIndex] = { ...articles[articleIndex], title, author };
+        
+        console.log(`文章 ID: ${articleId} 已被更新为:`, articles[articleIndex]);
+        
+        // 返回更新后的文章数据
+        res.json(articles[articleIndex]);
+    } else {
+        // 如果没找到，返回 404 Not Found 错误
+        console.log(`尝试更新失败，未找到文章 ID: ${articleId}`);
         res.status(404).json({ message: 'Article not found' });
     }
 });
@@ -245,8 +278,7 @@ app.post('/api/analyze/css', (req, res) => {
             cssZones,
             trainingRecommendations
         });
-    } catch (error) {
-        console.error("后端CSS分析出错:", error);
+    } catch (error) {        console.error("后端CSS分析出错:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
