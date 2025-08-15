@@ -248,20 +248,26 @@ app.get('/api/athletes/:id', (req, res) => {
 // ==========================================================
 // --- 核心乳酸测试分析接口 ---
 // ==========================================================
+// server.js
 app.post('/api/analyze/lactate', (req, res) => {
     try {
         const { data, peakLactate, recoveryLactate, recoveryDuration, mlssMethod } = req.body;
+        
         console.log(`收到乳酸分析请求，方法: ${mlssMethod}，包含 ${data.length} 个数据点。`);
+
         const { fittedCurve, params, ...metrics } = calculateMetrics(data, peakLactate, recoveryLactate, recoveryDuration, mlssMethod);
         const lactateZones = calculateLactateZones(metrics);
         const trainingRecommendations = generateTrainingRecommendations(lactateZones);
+
         res.json({
             success: true,
             metrics: metrics,
             lactateZones: lactateZones,
             trainingRecommendations: trainingRecommendations,
-            modelParams: params 
+            modelParams: params,
+            originalData: data // <-- 新增这一行，把原始数据也返回给App
         });
+
     } catch (error) {
         console.error("后端计算出错:", error);
         res.status(500).json({ success: false, message: error.message });
