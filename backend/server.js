@@ -115,7 +115,7 @@ app.get('/api/articles', (req, res) => {
 });
 
 // ==========================================================
-// --- 新增：为移动App提供单篇文章详情的API接口 ---
+// --- 为移动App提供单篇文章详情的API接口 ---
 // ==========================================================
 app.get('/api/articles/:id', (req, res) => {
     // 从 URL 中获取 id 参数, 并将其转换为数字
@@ -132,6 +132,35 @@ app.get('/api/articles/:id', (req, res) => {
         // 如果没找到，返回 404 Not Found 错误
         res.status(404).json({ message: 'Article not found' });
     }
+});
+
+// ==========================================================
+// --- 新增：创建一篇新文章的API接口 ---
+// ==========================================================
+app.post('/api/articles', (req, res) => {
+    // 1. 从请求体 (request body) 中获取新文章的数据
+    const { title, author } = req.body;
+
+    // 2. 简单的验证
+    if (!title || !author) {
+        return res.status(400).json({ message: 'Title and author are required.' });
+    }
+
+    // 3. 创建一个新的文章对象
+    // 我们用当前时间戳加上一个随机数来生成一个简单的唯一ID
+    const newArticle = {
+        id: Date.now() + Math.floor(Math.random() * 100),
+        title: title,
+        author: author,
+    };
+
+    // 4. 将新文章添加到我们的 articles 数组的开头
+    articles.unshift(newArticle);
+    
+    console.log("新文章已创建:", newArticle);
+
+    // 5. 返回一个成功的响应，并附带上新创建的文章数据
+    res.status(201).json(newArticle);
 });
 // ==========================================================
 // --- 结束新增代码块 ---
