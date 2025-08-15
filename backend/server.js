@@ -221,7 +221,7 @@ app.put('/api/articles/:id', (req, res) => {
 });
 
 // ==========================================================
-// --- 新增：为移动App提供运动员列表的API接口 ---
+// --- 运动员数据API接口 ---
 // ==========================================================
 const athletes = [
   { id: '101', name: 'Xu Jiayu', specialty: 'Backstroke' },
@@ -234,11 +234,20 @@ app.get('/api/athletes', (req, res) => {
     res.json(athletes);
 });
 
-// ==========================================================
-// --- 结束新增代码块 ---
-// ==========================================================
+app.get('/api/athletes/:id', (req, res) => {
+    const athleteId = req.params.id;
+    console.log(`Received GET request for /api/athletes/${athleteId}`);
+    const athlete = athletes.find(a => a.id === athleteId);
+    if (athlete) {
+        res.json(athlete);
+    } else {
+        res.status(404).json({ message: 'Athlete not found' });
+    }
+});
 
-
+// ==========================================================
+// --- 核心乳酸测试分析接口 ---
+// ==========================================================
 app.post('/api/analyze/lactate', (req, res) => {
     try {
         const { data, peakLactate, recoveryLactate, recoveryDuration, mlssMethod } = req.body;
@@ -246,12 +255,19 @@ app.post('/api/analyze/lactate', (req, res) => {
         const { fittedCurve, params, ...metrics } = calculateMetrics(data, peakLactate, recoveryLactate, recoveryDuration, mlssMethod);
         const lactateZones = calculateLactateZones(metrics);
         const trainingRecommendations = generateTrainingRecommendations(lactateZones);
-        res.json({ metrics, lactateZones, trainingRecommendations, params });
+        res.json({
+            success: true,
+            metrics: metrics,
+            lactateZones: lactateZones,
+            trainingRecommendations: trainingRecommendations,
+            modelParams: params 
+        });
     } catch (error) {
         console.error("后端计算出错:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
 
 app.post('/api/analyze/group', (req, res) => {
     try {
