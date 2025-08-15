@@ -99,6 +99,24 @@ app.post('/api/login', (req, res) => {
     }
 });
 
+// ==========================================================
+// --- 新增：为移动App提供文章列表的API接口 ---
+// ==========================================================
+const articles = [
+  { id: 1, title: 'React Native Is Awesome', author: 'John Doe' },
+  { id: 2, title: 'Building Your First App', author: 'Jane Smith' },
+  { id: 3, title: 'Understanding API Endpoints', author: 'Peter Jones' },
+  { id: 4, title: 'Connecting to a Backend', author: 'Emily White' },
+];
+
+app.get('/api/articles', (req, res) => {
+    console.log("收到对 /api/articles 的GET请求");
+    res.json(articles);
+});
+// ==========================================================
+// --- 结束新增代码块 ---
+// ==========================================================
+
 app.post('/api/analyze/lactate', (req, res) => {
     try {
         const { data, peakLactate, recoveryLactate, recoveryDuration, mlssMethod } = req.body;
