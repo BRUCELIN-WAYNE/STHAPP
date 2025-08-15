@@ -100,7 +100,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // ==========================================================
-// --- 新增：为移动App提供文章列表的API接口 ---
+// --- 为移动App提供文章列表的API接口 ---
 // ==========================================================
 const articles = [
   { id: 1, title: 'React Native Is Awesome', author: 'John Doe' },
@@ -113,9 +113,30 @@ app.get('/api/articles', (req, res) => {
     console.log("收到对 /api/articles 的GET请求");
     res.json(articles);
 });
+
+// ==========================================================
+// --- 新增：为移动App提供单篇文章详情的API接口 ---
+// ==========================================================
+app.get('/api/articles/:id', (req, res) => {
+    // 从 URL 中获取 id 参数, 并将其转换为数字
+    const articleId = parseInt(req.params.id, 10);
+    console.log(`收到对 /api/articles/${articleId} 的GET请求`);
+
+    // 在我们的示例数据中查找对应的文章
+    const article = articles.find(a => a.id === articleId);
+
+    if (article) {
+        // 如果找到了，返回这篇文章的数据
+        res.json(article);
+    } else {
+        // 如果没找到，返回 404 Not Found 错误
+        res.status(404).json({ message: 'Article not found' });
+    }
+});
 // ==========================================================
 // --- 结束新增代码块 ---
 // ==========================================================
+
 
 app.post('/api/analyze/lactate', (req, res) => {
     try {
