@@ -99,181 +99,19 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// ==========================================================
-// --- 为移动App提供文章列表的API接口 ---
-// ==========================================================
-const articles = [
-  { id: 1, title: 'React Native Is Awesome', author: 'John Doe' },
-  { id: 2, title: 'Building Your First App', author: 'Jane Smith' },
-  { id: 3, title: 'Understanding API Endpoints', author: 'Peter Jones' },
-  { id: 4, title: 'Connecting to a Backend', author: 'Emily White' },
-];
-
-app.get('/api/articles', (req, res) => {
-    console.log("收到对 /api/articles 的GET请求");
-    res.json(articles);
-});
-
-// ==========================================================
-// --- 为移动App提供单篇文章详情的API接口 ---
-// ==========================================================
-app.get('/api/articles/:id', (req, res) => {
-    // 从 URL 中获取 id 参数, 并将其转换为数字
-    const articleId = parseInt(req.params.id, 10);
-    console.log(`收到对 /api/articles/${articleId} 的GET请求`);
-
-    // 在我们的示例数据中查找对应的文章
-    const article = articles.find(a => a.id === articleId);
-
-    if (article) {
-        // 如果找到了，返回这篇文章的数据
-        res.json(article);
-    } else {
-        // 如果没找到，返回 404 Not Found 错误
-        res.status(404).json({ message: 'Article not found' });
-    }
-});
-
-// ==========================================================
-// --- 创建一篇新文章的API接口 ---
-// ==========================================================
-app.post('/api/articles', (req, res) => {
-    // 1. 从请求体 (request body) 中获取新文章的数据
-    const { title, author } = req.body;
-
-    // 2. 简单的验证
-    if (!title || !author) {
-        return res.status(400).json({ message: 'Title and author are required.' });
-    }
-
-    // 3. 创建一个新的文章对象
-    // 我们用当前时间戳加上一个随机数来生成一个简单的唯一ID
-    const newArticle = {
-        id: Date.now() + Math.floor(Math.random() * 100),
-        title: title,
-        author: author,
-    };
-
-    // 4. 将新文章添加到我们的 articles 数组的开头
-    articles.unshift(newArticle);
-    
-    console.log("新文章已创建:", newArticle);
-
-    // 5. 返回一个成功的响应，并附带上新创建的文章数据
-    res.status(201).json(newArticle);
-});
-
-// ==========================================================
-// --- 删除一篇文章的API接口 ---
-// ==========================================================
-app.delete('/api/articles/:id', (req, res) => {
-    // 1. 从 URL 中获取 id 参数, 并将其转换为数字
-    const articleId = parseInt(req.params.id, 10);
-
-    // 2. 在数组中查找该文章的索引 (index)
-    const articleIndex = articles.findIndex(a => a.id === articleId);
-
-    // 3. 如果找到了文章 (索引不为 -1)
-    if (articleIndex !== -1) {
-        // 使用 splice 方法从数组中移除该文章
-        articles.splice(articleIndex, 1);
-        console.log(`文章 ID: ${articleId} 已被删除`);
-        // 返回一个成功的响应，通常没有内容 (204 No Content)
-        res.status(204).send();
-    } else {
-        // 如果没找到，返回 404 Not Found 错误
-        console.log(`尝试删除失败，未找到文章 ID: ${articleId}`);
-        res.status(404).json({ message: 'Article not found' });
-    }
-});
-
-// ==========================================================
-// --- 更新一篇文章的API接口 ---
-// ==========================================================
-app.put('/api/articles/:id', (req, res) => {
-    // 1. 从 URL 中获取 id 参数, 并将其转换为数字
-    const articleId = parseInt(req.params.id, 10);
-    // 2. 从请求体中获取更新后的数据
-    const { title, author } = req.body;
-
-    // 3. 简单的验证
-    if (!title || !author) {
-        return res.status(400).json({ message: 'Title and author are required.' });
-    }
-
-    // 4. 在数组中查找该文章的索引 (index)
-    const articleIndex = articles.findIndex(a => a.id === articleId);
-
-    // 5. 如果找到了文章
-    if (articleIndex !== -1) {
-        // 更新文章对象
-        articles[articleIndex] = { ...articles[articleIndex], title, author };
-        
-        console.log(`文章 ID: ${articleId} 已被更新为:`, articles[articleIndex]);
-        
-        // 返回更新后的文章数据
-        res.json(articles[articleIndex]);
-    } else {
-        // 如果没找到，返回 404 Not Found 错误
-        console.log(`尝试更新失败，未找到文章 ID: ${articleId}`);
-        res.status(404).json({ message: 'Article not found' });
-    }
-});
-
-// ==========================================================
-// --- 运动员数据API接口 ---
-// ==========================================================
-const athletes = [
-  { id: '101', name: 'Xu Jiayu', specialty: 'Backstroke' },
-  { id: '102', name: 'Zhang Yufei', specialty: 'Butterfly' },
-  { id: '103', name: 'Wang Shun', specialty: 'Medley' },
-];
-
-app.get('/api/athletes', (req, res) => {
-    console.log("Received GET request for /api/athletes");
-    res.json(athletes);
-});
-
-app.get('/api/athletes/:id', (req, res) => {
-    const athleteId = req.params.id;
-    console.log(`Received GET request for /api/athletes/${athleteId}`);
-    const athlete = athletes.find(a => a.id === athleteId);
-    if (athlete) {
-        res.json(athlete);
-    } else {
-        res.status(404).json({ message: 'Athlete not found' });
-    }
-});
-
-// ==========================================================
-// --- 核心乳酸测试分析接口 ---
-// ==========================================================
-// server.js
 app.post('/api/analyze/lactate', (req, res) => {
     try {
         const { data, peakLactate, recoveryLactate, recoveryDuration, mlssMethod } = req.body;
-        
         console.log(`收到乳酸分析请求，方法: ${mlssMethod}，包含 ${data.length} 个数据点。`);
-
         const { fittedCurve, params, ...metrics } = calculateMetrics(data, peakLactate, recoveryLactate, recoveryDuration, mlssMethod);
         const lactateZones = calculateLactateZones(metrics);
         const trainingRecommendations = generateTrainingRecommendations(lactateZones);
-
-        res.json({
-            success: true,
-            metrics: metrics,
-            lactateZones: lactateZones,
-            trainingRecommendations: trainingRecommendations,
-            modelParams: params,
-            originalData: data // <-- 新增这一行，把原始数据也返回给App
-        });
-
+        res.json({ metrics, lactateZones, trainingRecommendations, params });
     } catch (error) {
         console.error("后端计算出错:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
 
 app.post('/api/analyze/group', (req, res) => {
     try {
@@ -315,7 +153,8 @@ app.post('/api/analyze/css', (req, res) => {
             cssZones,
             trainingRecommendations
         });
-    } catch (error) {        console.error("后端CSS分析出错:", error);
+    } catch (error) {
+        console.error("后端CSS分析出错:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
