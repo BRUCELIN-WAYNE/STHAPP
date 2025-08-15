@@ -135,7 +135,7 @@ app.get('/api/articles/:id', (req, res) => {
 });
 
 // ==========================================================
-// --- 新增：创建一篇新文章的API接口 ---
+// --- 创建一篇新文章的API接口 ---
 // ==========================================================
 app.post('/api/articles', (req, res) => {
     // 1. 从请求体 (request body) 中获取新文章的数据
@@ -161,6 +161,30 @@ app.post('/api/articles', (req, res) => {
 
     // 5. 返回一个成功的响应，并附带上新创建的文章数据
     res.status(201).json(newArticle);
+});
+
+// ==========================================================
+// --- 新增：删除一篇文章的API接口 ---
+// ==========================================================
+app.delete('/api/articles/:id', (req, res) => {
+    // 1. 从 URL 中获取 id 参数, 并将其转换为数字
+    const articleId = parseInt(req.params.id, 10);
+
+    // 2. 在数组中查找该文章的索引 (index)
+    const articleIndex = articles.findIndex(a => a.id === articleId);
+
+    // 3. 如果找到了文章 (索引不为 -1)
+    if (articleIndex !== -1) {
+        // 使用 splice 方法从数组中移除该文章
+        articles.splice(articleIndex, 1);
+        console.log(`文章 ID: ${articleId} 已被删除`);
+        // 返回一个成功的响应，通常没有内容 (204 No Content)
+        res.status(204).send();
+    } else {
+        // 如果没找到，返回 404 Not Found 错误
+        console.log(`尝试删除失败，未找到文章 ID: ${articleId}`);
+        res.status(404).json({ message: 'Article not found' });
+    }
 });
 // ==========================================================
 // --- 结束新增代码块 ---
