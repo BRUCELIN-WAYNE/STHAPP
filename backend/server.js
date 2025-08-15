@@ -188,7 +188,7 @@ app.delete('/api/articles/:id', (req, res) => {
 });
 
 // ==========================================================
-// --- 新增：更新一篇文章的API接口 ---
+// --- 更新一篇文章的API接口 ---
 // ==========================================================
 app.put('/api/articles/:id', (req, res) => {
     // 1. 从 URL 中获取 id 参数, 并将其转换为数字
@@ -219,6 +219,21 @@ app.put('/api/articles/:id', (req, res) => {
         res.status(404).json({ message: 'Article not found' });
     }
 });
+
+// ==========================================================
+// --- 新增：为移动App提供运动员列表的API接口 ---
+// ==========================================================
+const athletes = [
+  { id: '101', name: 'Xu Jiayu', specialty: 'Backstroke' },
+  { id: '102', name: 'Zhang Yufei', specialty: 'Butterfly' },
+  { id: '103', name: 'Wang Shun', specialty: 'Medley' },
+];
+
+app.get('/api/athletes', (req, res) => {
+    console.log("Received GET request for /api/athletes");
+    res.json(athletes);
+});
+
 // ==========================================================
 // --- 结束新增代码块 ---
 // ==========================================================
