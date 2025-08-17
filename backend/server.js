@@ -11,9 +11,7 @@ function formatTime(totalSeconds) {
 }
 
 // --- Lactate & CSS Calculation Models ---
-// (Your proprietary algorithms go here)
-function fitNewLactateModel(data) { /* ... your algorithm ... */ return { params: {}, fittedCurve: () => {} }; }
-function findLogLogLT1(data) { /* ... your algorithm ... */ return data[0]; }
+// (Mock data is used here for demonstration until your real algorithms are implemented)
 function calculateMetrics(data) { 
     console.log("Using mock data for lactate metrics calculation.");
     return {
@@ -22,11 +20,10 @@ function calculateMetrics(data) {
         vvo2max: { pace: 240, hr: 185, lactate: 7.5 }
     };
 }
-
-// --- CRITICAL FIX 1: Expanded mock lactate zones to 7 levels ---
 function calculateLactateZones(metrics) {
     console.log("Using mock data for lactate zones calculation.");
-    const p_lt1 = metrics.lt1.pace / 2; // Assuming pace is for 200m, convert to 100m
+    // Pace is for 200m in the metrics, convert to 100m for zones
+    const p_lt1 = metrics.lt1.pace / 2;
     const p_mlss = metrics.mlss.pace / 2;
     const p_vvo2max = metrics.vvo2max.pace / 2;
     const zones = [
@@ -35,14 +32,12 @@ function calculateLactateZones(metrics) {
         { id: 3, nameKey: "zone-name-3", purpose: '提高乳酸利用效率。', pace: `${formatTime(p_mlss + 1)} - ${formatTime(p_lt1 - 1)}`, color: '#ccfbf1' },
         { id: 4, nameKey: "zone-name-4", purpose: '提升最大乳酸稳态水平。', pace: `~ ${formatTime(p_mlss)}`, color: '#cffafe' },
         { id: 5, nameKey: "zone-name-5", purpose: '刺激心肺系统达到上限。', pace: `${formatTime(p_vvo2max)} - ${formatTime(p_mlss - 1)}`, color: '#dbeafe' },
-        { id: 6, nameKey: "zone-name-6", purpose: '发展糖酵解功率, 提升乳酸耐受和清除能力。', pace: `${formatTime(p_vvo2max - 5)} - ${formatTime(p_vvo2max - 1)}`, color: '#ffedd5' },
+        { id: 6, nameKey: "zone-name-6", purpose: '发展糖酵解功率。', pace: `${formatTime(p_vvo2max - 5)} - ${formatTime(p_vvo2max - 1)}`, color: '#ffedd5' },
         { id: 7, nameKey: "zone-name-7", purpose: '发展纯粹的速度和爆发力。', pace: '全力冲刺', color: '#fee2e2' }
     ];
     return zones;
 }
-
 function calculateCssZones(cssPace) {
-    // ... (This function is correct, no changes needed)
     const zones = [
         { id: 1, nameKey: "zone-name-1", purpose: '促进血液循环, 加速恢复, 打磨技术细节。', pace: `> ${formatTime(cssPace + 15)}`, color: '#f1f5f9' },
         { id: 2, nameKey: "zone-name-2", purpose: '构建有氧基础, 提高脂肪利用效率。', pace: `${formatTime(cssPace + 8)} - ${formatTime(cssPace + 14)}`, color: '#dcfce7' },
@@ -55,7 +50,7 @@ function calculateCssZones(cssPace) {
     return zones;
 }
 
-// --- CRITICAL FIX 2: Create the two-line name object ---
+// --- CRITICAL FIX: This function now creates the two-line object ---
 function translateZoneName(nameKey, id) {
     const names = {
       'zone-name-1': '恢复区', 'zone-name-2': '耐力区', 'zone-name-3': '节奏区',
@@ -82,7 +77,7 @@ app.post('/analyze/lactate', (req, res) => {
     try {
         const metrics = calculateMetrics(req.body.data);
         let lactateZones = calculateLactateZones(metrics);
-        // Apply the new two-line naming convention
+        // Apply the new two-line naming convention before sending
         lactateZones = lactateZones.map(zone => ({
             ...zone,
             nameKey: translateZoneName(zone.nameKey, zone.id)
@@ -101,7 +96,7 @@ app.post('/analyze/css', (req, res) => {
         }
         const cssPacePer100m = (t400 - t200) / 2;
         let cssZones = calculateCssZones(cssPacePer100m);
-        // Apply the new two-line naming convention
+        // Apply the new two-line naming convention before sending
         cssZones = cssZones.map(zone => ({
             ...zone,
             nameKey: translateZoneName(zone.nameKey, zone.id)
