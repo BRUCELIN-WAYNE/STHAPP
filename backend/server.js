@@ -12,7 +12,52 @@ app.use(express.json());
 const port = process.env.PORT || 10000;
 
 
-// --- START: 核心算法模型 ---
+// --- 新增：微信 Access Token 管理 ---
+// 缓存 access_token 的简单实现，避免每次登录都重新获取
+let tokenCache = {
+    access_token: '',
+    expires_at: 0
+};
+
+// 获取 access_token 的函数 (调用手机号接口的必备前提)
+async function getAccessToken() {
+    const now = Date.now();
+    // 如果缓存中的 token 存在且未过期 (微信默认7200秒，我们提前5分钟刷新)
+    if (tokenCache.access_token && tokenCache.expires_at > now + 300 * 1000) {
+        console.log("使用缓存的 access_token");
+        return tokenCache.access_token;
+    }
+
+    const appId = process.env.WECHAT_APPID;
+    const appSecret = process.env.WECHAT_APPSECRET;
+    if (!appId || !appSecret) {
+        throw new Error("服务器环境变量中缺少 WECHAT_APPID 或 WECHAT_APPSECRET");
+    }
+
+    const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
+    
+    console.log("正在请求新的 access_token...");
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.access_token) {
+        console.log("成功获取新的 access_token");
+        tokenCache = {
+            access_token: data.access_token,
+            // (data.expires_in - 300) 确保在微信过期前5分钟就刷新
+            expires_at: now + (data.expires_in - 300) * 1000 
+        };
+        return data.access_token;
+    } else {
+        // 请求失败，重置缓存
+        tokenCache = { access_token: '', expires_at: 0 };
+        throw new Error(`获取 access_token 失败: ${data.errmsg}`);
+    }
+}
+// --- 新增部分结束 ---
+
+
+// --- START: 核心算法模型 (你的原始代码，保持不变) ---
 
 // 辅助函数
 function paceToSeconds(min, sec) { return (parseFloat(min) || 0) * 60 + (parseFloat(sec) || 0); }
@@ -96,7 +141,7 @@ function findLogLogLT1(data) {
     return breakpointIndex !== -1 ? logData[breakpointIndex].original : data.filter(d => !d.isBaseline)[1];
 }
 
-// --- CRITICAL FIX 1: 核心指标计算函数 ---
+// 核心指标计算函数
 function calculateMetrics(data, mlssMethod = 'mod_dmax') {
     const nonBaselineData = data.filter(d => !d.isBaseline);
     if (!nonBaselineData || nonBaselineData.length < 3) throw new Error("至少需要3组有效数据");
@@ -149,7 +194,6 @@ function calculateMetrics(data, mlssMethod = 'mod_dmax') {
         }
     });
 
-    // Construct the final vvo2max object from the raw last data point
     const vvo2max = {
       speed: vvo2max_raw.speed,
       lactate: vvo2max_raw.lactate,
@@ -160,11 +204,10 @@ function calculateMetrics(data, mlssMethod = 'mod_dmax') {
     return { lt1, mlss, vvo2max };
 }
 
-// --- CRITICAL FIX 2: 训练区间计算 ---
+// 训练区间计算
 function calculateLactateZones(metrics) {
     if (!metrics || !metrics.lt1 || !metrics.mlss || !metrics.vvo2max) return [];
     
-    // Use pace per 100m for easier calculations
     const p_lt1 = metrics.lt1.pace / 2;
     const p_mlss = metrics.mlss.pace / 2;
     const p_vvo2max = metrics.vvo2max.pace / 2;
@@ -218,48 +261,75 @@ app.get('/', (req, res) => {
     res.send('Hello from the Swimming Test-hub backend! All algorithms are live.');
 });
 
+// --- 关键修改：完整的手机号授权登录接口 ---
 app.post('/login', async (req, res) => {
-    console.log("--- 收到 /login 请求 ---");
+    console.log("--- 收到 /login (手机号授权) 请求 ---");
     try {
-        const { loginCode } = req.body; // 小程序端发来的是 loginCode
+        // **关键：前端需要同时传来 loginCode 和 phoneCode**
+        const { loginCode, phoneCode } = req.body; 
+        
+        if (!loginCode || !phoneCode) {
+            console.error("请求体中缺少 loginCode 或 phoneCode");
+            return res.status(400).json({ success: false, message: '缺少关键参数' });
+        }
+
         const appId = process.env.WECHAT_APPID;
         const appSecret = process.env.WECHAT_APPSECRET;
 
-        if (!loginCode || !appId || !appSecret) {
-            console.error("缺少关键参数: loginCode, AppID, 或 AppSecret");
-            return res.status(400).json({ message: '缺少关键参数' });
-        }
-
-        const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecret}&js_code=${loginCode}&grant_type=authorization_code`;
-        
+        // 步骤 1: 用 loginCode 换取 session_key 和 openid
+        const sessionUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecret}&js_code=${loginCode}&grant_type=authorization_code`;
         console.log("正在请求微信 jscode2session API...");
-        const sessionResponse = await fetch(url);
+        const sessionResponse = await fetch(sessionUrl);
         const sessionData = await sessionResponse.json();
         console.log("微信 jscode2session API 返回:", sessionData);
 
-        if (sessionData.errcode) {
-            throw new Error(`jscode2session failed: ${sessionData.errmsg}`);
+        if (sessionData.errcode || !sessionData.session_key) {
+            throw new Error(`jscode2session 失败: ${sessionData.errmsg || '无法获取 session_key'}`);
         }
         
-        const { openid } = sessionData;
+        const { openid, session_key } = sessionData;
 
-        // 在您的数据库中查找或创建用户...
-        // ...
+        // 步骤 2: 获取 access_token
+        const accessToken = await getAccessToken();
 
-        // 返回成功信息和 token
-        console.log(`用户 ${openid} 登录成功，返回 token。`);
+        // 步骤 3: 用 access_token 和 phoneCode 换取手机号
+        const phoneUrl = `https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=${accessToken}`;
+        console.log("正在请求微信 getuserphonenumber API...");
+        const phoneResponse = await fetch(phoneUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: phoneCode })
+        });
+        const phoneData = await phoneResponse.json();
+        console.log("微信 getuserphonenumber API 返回:", phoneData);
+
+        if (phoneData.errcode !== 0) {
+            throw new Error(`获取手机号失败: ${phoneData.errmsg}`);
+        }
+
+        const phoneNumber = phoneData.phone_info.phoneNumber;
+
+        // 步骤 4: 在你的数据库中根据 openid 或 phoneNumber 查找或创建用户
+        // TODO: Add your database logic here...
+        console.log(`用户 ${openid} (手机号: ${phoneNumber}) 登录成功。`);
+
+        // 步骤 5: 返回成功信息和 token
         res.json({
             success: true,
             message: '登录成功',
-            token: `dummy_token_for_${openid}` // 将来可以替换为真实的 JWT token
+            token: `dummy_token_for_${openid}`, // TODO: 将来可以替换为真实的 JWT token
+            userInfo: { openid, phoneNumber }
         });
 
     } catch (error) {
-        console.error("后端 /login 接口出错:", error);
-        res.status(500).json({ success: false, message: '服务器内部错误' });
+        console.error("后端 /login 接口出错:", error.message);
+        // 在响应中返回更具体的错误信息，方便前端调试
+        res.status(500).json({ success: false, message: error.message || '服务器内部错误' });
     }
 });
 
+
+// --- 你的其他 API 路由 (保持不变) ---
 app.post('/analyze/lactate', (req, res) => {
     try {
         const { data, maxHr, baselineLactate } = req.body;
