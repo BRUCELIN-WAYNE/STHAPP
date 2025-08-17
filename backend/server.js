@@ -208,17 +208,28 @@ function calculateMetrics(data, mlssMethod = 'mod_dmax') {
 function calculateLactateZones(metrics) {
     if (!metrics || !metrics.lt1 || !metrics.mlss || !metrics.vvo2max) return [];
     
+    // 保持小程序版原有的结构：将200米配速转换为100米配速进行计算
     const p_lt1 = metrics.lt1.pace / 2;
     const p_mlss = metrics.mlss.pace / 2;
     const p_vvo2max = metrics.vvo2max.pace / 2;
 
     const zones = [
+        // Zone 1 和 2 的算法原本就相同，更新了 purpose 文本
         { id: 1, nameKey: "zone-name-1", purpose: '促进恢复, 技术练习。', pace: `> ${formatTime(p_lt1 + 10)}`, color: '#f1f5f9' },
-        { id: 2, nameKey: "zone-name-2", purpose: '构建基础有氧能力。', pace: `${formatTime(p_lt1)} - ${formatTime(p_lt1 + 9)}`, color: '#dcfce7' },
-        { id: 3, nameKey: "zone-name-3", purpose: '提高乳酸利用效率。', pace: `${formatTime(p_mlss + 6)} - ${formatTime(p_lt1 - 1)}`, color: '#ccfbf1' },
-        { id: 4, nameKey: "zone-name-4", purpose: '提升最大乳酸稳态水平。', pace: `${formatTime(p_mlss - 5)} - ${formatTime(p_mlss + 5)}`, color: '#cffafe' },
-        { id: 5, nameKey: "zone-name-5", purpose: '刺激心肺系统达到上限。', pace: `${formatTime(p_vvo2max)} - ${formatTime(p_mlss - 6)}`, color: '#dbeafe' },
-        { id: 6, nameKey: "zone-name-6", purpose: '发展糖酵解功率。', pace: `${formatTime(p_vvo2max - 8)} - ${formatTime(p_vvo2max - 1)}`, color: '#ffedd5' },
+        { id: 2, nameKey: "zone-name-2", purpose: '构建基础有氧能力, 提高线粒体效率。', pace: `${formatTime(p_lt1)} - ${formatTime(p_lt1 + 9)}`, color: '#dcfce7' },
+        
+        // --- 以下是修改的核心 ---
+        // [修改] Zone 3: 算法从 p_mlss + 6 改为 p_mlss + 1
+        { id: 3, nameKey: "zone-name-3", purpose: '提高乳酸利用效率, 发展在高强度下的有氧能力。', pace: `${formatTime(p_mlss + 1)} - ${formatTime(p_lt1 - 1)}`, color: '#ccfbf1' },
+        // [修改] Zone 4: 算法从一个10秒的范围改为一个精确点
+        { id: 4, nameKey: "zone-name-4", purpose: '提升最大乳酸稳态水平。', pace: `~ ${formatTime(p_mlss)}`, color: '#cffafe' },
+        // [修改] Zone 5: 算法从 p_mlss - 6 改为 p_mlss - 1
+        { id: 5, nameKey: "zone-name-5", purpose: '刺激心肺系统达到其功能上限, 提升VO2max。', pace: `${formatTime(p_vvo2max)} - ${formatTime(p_mlss - 1)}`, color: '#dbeafe' },
+        // [修改] Zone 6: 算法从 p_vvo2max - 8 改为 p_vvo2max - 5
+        { id: 6, nameKey: "zone-name-6", purpose: '提升糖酵解功率和对高乳酸环境的耐受性。', pace: `${formatTime(p_vvo2max - 5)} - ${formatTime(p_vvo2max - 1)}`, color: '#ffedd5' },
+        // --- 修改结束 ---
+
+        // Zone 7 的算法原本就相同，更新了 purpose 文本
         { id: 7, nameKey: "zone-name-7", purpose: '发展纯粹的速度和爆发力。', pace: '全力冲刺', color: '#fee2e2' }
     ];
     return zones;
