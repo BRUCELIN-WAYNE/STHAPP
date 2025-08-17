@@ -276,6 +276,9 @@ app.post('/login', async (req, res) => {
         const appId = process.env.WECHAT_APPID;
         const appSecret = process.env.WECHAT_APPSECRET;
 
+        console.log(`[DEBUG] 从环境变量读取到的 AppID: '${appId}'`);
+        console.log(`[DEBUG] 从环境变量读取到的 AppSecret 是否为空: ${!appSecret}`); // 为安全不直接打印Secret，只检查是否存在
+
         // 步骤 1: 用 loginCode 换取 session_key 和 openid
         const sessionUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecret}&js_code=${loginCode}&grant_type=authorization_code`;
         console.log("正在请求微信 jscode2session API...");
