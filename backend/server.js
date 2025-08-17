@@ -3,6 +3,8 @@
 // --- 服务器核心设置 ---
 const express = require('express');
 const cors = require('cors');
+// 关键：引入 node-fetch
+const fetch = require('node-fetch'); 
 const app = express();
 
 app.use(cors());
@@ -214,6 +216,48 @@ function translateZoneName(nameKey, id, isLactateContext = false) {
 // --- API 路由定义 ---
 app.get('/', (req, res) => {
     res.send('Hello from the Swimming Test-hub backend! All algorithms are live.');
+});
+
+app.post('/login', async (req, res) => {
+    console.log("--- 收到 /login 请求 ---");
+    try {
+        const { loginCode } = req.body; // 小程序端发来的是 loginCode
+        const appId = process.env.WECHAT_APPID;
+        const appSecret = process.env.WECHAT_APPSECRET;
+
+        if (!loginCode || !appId || !appSecret) {
+            console.error("缺少关键参数: loginCode, AppID, 或 AppSecret");
+            return res.status(400).json({ message: '缺少关键参数' });
+        }
+
+        const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecret}&js_code=${loginCode}&grant_type=authorization_code`;
+        
+        console.log("正在请求微信 jscode2session API...");
+        const sessionResponse = await fetch(url);
+        const sessionData = await sessionResponse.json();
+        console.log("微信 jscode2session API 返回:", sessionData);
+
+        if (sessionData.errcode) {
+            throw new Error(`jscode2session failed: ${sessionData.errmsg}`);
+        }
+        
+        const { openid } = sessionData;
+
+        // 在您的数据库中查找或创建用户...
+        // ...
+
+        // 返回成功信息和 token
+        console.log(`用户 ${openid} 登录成功，返回 token。`);
+        res.json({
+            success: true,
+            message: '登录成功',
+            token: `dummy_token_for_${openid}` // 将来可以替换为真实的 JWT token
+        });
+
+    } catch (error) {
+        console.error("后端 /login 接口出错:", error);
+        res.status(500).json({ success: false, message: '服务器内部错误' });
+    }
 });
 
 app.post('/analyze/lactate', (req, res) => {
