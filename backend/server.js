@@ -10,11 +10,11 @@ app.use(express.json());
 const port = process.env.PORT || 10000;
 
 
-// --- START: 核心算法模型 (1:1 移植自 LINFINAL.html) ---
+// --- START: 核心算法模型 ---
 
 // 辅助函数
 function paceToSeconds(min, sec) { return (parseFloat(min) || 0) * 60 + (parseFloat(sec) || 0); }
-function speedToPace(speed) { return speed > 0 ? 200 / speed : 0; } // 修正为200米配速
+function speedToPace(speed) { return speed > 0 ? 200 / speed : 0; } // 200m pace
 function formatTime(totalSeconds) {
     if (isNaN(totalSeconds) || !isFinite(totalSeconds)) return 'N/A';
     const minutes = Math.floor(totalSeconds / 60);
@@ -48,7 +48,6 @@ function fitNewLactateModel(data) {
     const P1_min = Math.min(...speeds.filter(s => s > 0));
     const P1_max = speeds[speeds.length - 2] || P1_min;
     
-    // Grid search to find best initial parameters
     for (let c = cLa_rest_min; c <= cLa_rest_max; c += 0.1) {
         for (let p1 = P1_min; p1 <= P1_max; p1 += 0.05) {
             for (let p2 = 0.05; p2 <= 0.5; p2 += 0.02) {
@@ -95,12 +94,11 @@ function findLogLogLT1(data) {
     return breakpointIndex !== -1 ? logData[breakpointIndex].original : data.filter(d => !d.isBaseline)[1];
 }
 
-// 核心指标计算函数
+// --- CRITICAL FIX 1: 核心指标计算函数 ---
 function calculateMetrics(data, mlssMethod = 'mod_dmax') {
     const nonBaselineData = data.filter(d => !d.isBaseline);
     if (!nonBaselineData || nonBaselineData.length < 3) throw new Error("至少需要3组有效数据");
     
-    const vvo2max = nonBaselineData[nonBaselineData.length - 1];
     const { params, fittedCurve } = fitNewLactateModel(data);
 
     let lt1;
@@ -112,8 +110,9 @@ function calculateMetrics(data, mlssMethod = 'mod_dmax') {
         lt1 = { speed: lt1_speed, lactate: lt1_lactate, pace: speedToPace(lt1_speed) };
     }
     
+    const vvo2max_raw = nonBaselineData[nonBaselineData.length - 1];
     const startPoint = lt1;
-    const endPoint = vvo2max;
+    const endPoint = vvo2max_raw;
     let max_dist = 0;
     let mlss = null;
 
@@ -148,16 +147,25 @@ function calculateMetrics(data, mlssMethod = 'mod_dmax') {
         }
     });
 
+    // Construct the final vvo2max object from the raw last data point
+    const vvo2max = {
+      speed: vvo2max_raw.speed,
+      lactate: vvo2max_raw.lactate,
+      hr: vvo2max_raw.hr,
+      pace: speedToPace(vvo2max_raw.speed)
+    };
+
     return { lt1, mlss, vvo2max };
 }
 
-// 训练区间计算
+// --- CRITICAL FIX 2: 训练区间计算 ---
 function calculateLactateZones(metrics) {
     if (!metrics || !metrics.lt1 || !metrics.mlss || !metrics.vvo2max) return [];
     
-    const p_lt1 = metrics.lt1.pace;
-    const p_mlss = metrics.mlss.pace;
-    const p_vvo2max = metrics.vvo2max.pace;
+    // Use pace per 100m for easier calculations
+    const p_lt1 = metrics.lt1.pace / 2;
+    const p_mlss = metrics.mlss.pace / 2;
+    const p_vvo2max = metrics.vvo2max.pace / 2;
 
     const zones = [
         { id: 1, nameKey: "zone-name-1", purpose: '促进恢复, 技术练习。', pace: `> ${formatTime(p_lt1 + 10)}`, color: '#f1f5f9' },
@@ -186,15 +194,19 @@ function calculateCssZones(cssPace) {
 }
 
 // 区间名称格式化
-function translateZoneName(nameKey, id) {
+function translateZoneName(nameKey, id, isLactateContext = false) {
+    let name = '';
     const names = {
       'zone-name-1': '恢复区', 'zone-name-2': '耐力区', 'zone-name-3': '节奏区',
-      'zone-name-4': '阈值区', 'zone-name-5': '最大摄氧量区', 'zone-name-6': '无氧耐力区',
+      'zone-name-4': isLactateContext ? '无氧阈 (vLT2 ≈ MLSS)' : '阈值区',
+      'zone-name-5': '最大摄氧量区', 'zone-name-6': '无氧耐力区',
       'zone-name-7': '神经肌肉力量区',
     };
+    name = names[nameKey] || nameKey;
+    
     return {
         line1: `区间 ${id}`,
-        line2: names[nameKey] || nameKey
+        line2: name
     };
 }
 // --- END: 核心算法模型 ---
@@ -207,22 +219,15 @@ app.get('/', (req, res) => {
 
 app.post('/analyze/lactate', (req, res) => {
     try {
-        const { data, maxHr, baselineLactate, restingLactate } = req.body;
+        const { data, maxHr, baselineLactate } = req.body;
+        const fullDataForCalc = [{ isBaseline: true, lactate: baselineLactate, speed: 0 }, ...data];
         
-        // 将基线数据点加入到数据数组中供算法使用
-        const fullDataForCalc = [
-            { isBaseline: true, lactate: baselineLactate, speed: 0 },
-            ...data
-        ];
-        
-        // 调用真实的算法
         const metrics = calculateMetrics(fullDataForCalc);
         let lactateZones = calculateLactateZones(metrics);
 
-        // 格式化区间名称
         lactateZones = lactateZones.map(zone => ({
             ...zone,
-            nameKey: translateZoneName(zone.nameKey, zone.id)
+            nameKey: translateZoneName(zone.nameKey, zone.id, true)
         }));
 
         res.json({ metrics, lactateZones });
@@ -243,7 +248,7 @@ app.post('/analyze/css', (req, res) => {
         
         cssZones = cssZones.map(zone => ({
             ...zone,
-            nameKey: translateZoneName(zone.nameKey, zone.id)
+            nameKey: translateZoneName(zone.nameKey, zone.id, false)
         }));
         
         res.json({
