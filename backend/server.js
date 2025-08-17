@@ -198,8 +198,7 @@ function translateZoneName(nameKey, id, isLactateContext = false) {
     let name = '';
     const names = {
       'zone-name-1': '恢复区', 'zone-name-2': '耐力区', 'zone-name-3': '节奏区',
-      'zone-name-4': isLactateContext ? '无氧阈 (vLT2 ≈ MLSS)' : '阈值区',
-      'zone-name-5': '最大摄氧量区', 'zone-name-6': '无氧耐力区',
+      'zone-name-4': '阈值区', 'zone-name-5': '最大摄氧量区', 'zone-name-6': '无氧耐力区',
       'zone-name-7': '神经肌肉力量区',
     };
     name = names[nameKey] || nameKey;
